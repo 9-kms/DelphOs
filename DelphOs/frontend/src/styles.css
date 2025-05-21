@@ -1,0 +1,989 @@
+:root {
+  --terminal-text: #33ff33;
+  --terminal-background: #000000;
+  --terminal-dim: #aaffaa;
+  --terminal-highlight: #ffffff;
+  --terminal-error: #ff3333;
+  --terminal-success: #33ff33;
+  --terminal-warning: #ffff33;
+  --terminal-info: #33aaff;
+  --terminal-bullish: #33ff33;
+  --terminal-bearish: #ff3333;
+  --terminal-neutral: #ffffff;
+}
+
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Courier New', monospace;
+  background-color: var(--terminal-background);
+  color: var(--terminal-text);
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+/* Main content layout with watchlist panel */
+.main-content {
+  display: flex;
+  flex-direction: row;
+  height: calc(100vh - 60px);
+  overflow: hidden;
+}
+
+/* Watchlist panel styling */
+.watchlist-panel {
+  width: 300px;
+  background-color: var(--terminal-background);
+  border-right: 1px solid var(--terminal-dim);
+  overflow-y: auto;
+  padding: 10px;
+}
+
+/* Watchlist container */
+.watchlist-container {
+  color: var(--terminal-text);
+  font-family: 'Courier New', monospace;
+}
+
+.watchlist-container h3 {
+  text-align: center;
+  margin-bottom: 15px;
+  color: var(--terminal-highlight);
+  font-size: 1.2rem;
+}
+
+.watchlist-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.watchlist-item {
+  padding: 8px;
+  border: 1px solid var(--terminal-dim);
+  border-radius: 4px;
+  background-color: rgba(51, 255, 51, 0.05);
+  position: relative;
+  transition: background-color 0.2s;
+}
+
+.watchlist-item:hover {
+  background-color: rgba(51, 255, 51, 0.1);
+}
+
+.watchlist-symbol {
+  font-weight: bold;
+  cursor: pointer;
+  color: var(--terminal-highlight);
+}
+
+.watchlist-symbol:hover {
+  text-decoration: underline;
+}
+
+.watchlist-date {
+  font-size: 0.8rem;
+  color: var(--terminal-dim);
+  margin-left: 10px;
+}
+
+.watchlist-notes {
+  margin-top: 5px;
+  font-size: 0.9rem;
+  color: var(--terminal-dim);
+  font-style: italic;
+}
+
+.watchlist-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: var(--terminal-dim);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.watchlist-remove:hover {
+  color: var(--terminal-error);
+}
+
+.watchlist-empty {
+  text-align: center;
+  color: var(--terminal-dim);
+  font-style: italic;
+  padding: 20px 0;
+}
+
+.terminal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--terminal-dim);
+}
+
+.terminal-title {
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+.view-switcher {
+  display: flex;
+  gap: 10px;
+}
+
+.view-switcher button {
+  background-color: transparent;
+  border: 1px solid var(--terminal-dim);
+  color: var(--terminal-dim);
+  font-family: 'Courier New', monospace;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.view-switcher button.active {
+  border-color: var(--terminal-text);
+  color: var(--terminal-text);
+  background-color: rgba(51, 255, 51, 0.1);
+}
+
+.terminal-controls button {
+  background-color: transparent;
+  border: 1px solid var(--terminal-text);
+  color: var(--terminal-text);
+  font-family: 'Courier New', monospace;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.terminal-controls button:hover {
+  background-color: rgba(51, 255, 51, 0.1);
+}
+
+.terminal-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.terminal-body {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.terminal-logs {
+  flex-grow: 0;
+  overflow-y: auto;
+  margin-bottom: 10px;
+  max-height: 30vh;
+}
+
+.log-entry {
+  display: flex;
+  margin-bottom: 2px;
+}
+
+.log-timestamp {
+  color: var(--terminal-dim);
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.log-message {
+  flex-grow: 1;
+}
+
+.log-type-error {
+  color: var(--terminal-error);
+}
+
+.log-type-success {
+  color: var(--terminal-success);
+}
+
+.log-type-warning {
+  color: var(--terminal-warning);
+}
+
+.log-type-info {
+  color: var(--terminal-text);
+}
+
+.coin-list {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.coin-list th {
+  background-color: rgba(51, 255, 51, 0.1);
+  padding: 8px 15px;
+  text-align: left;
+  cursor: pointer;
+  border-bottom: 1px solid var(--terminal-dim);
+  position: relative;
+}
+
+.coin-list th:hover {
+  background-color: rgba(51, 255, 51, 0.2);
+}
+
+.coin-list td {
+  padding: 6px 15px;
+}
+
+.coin-list tr:hover {
+  background-color: rgba(51, 255, 51, 0.05);
+  cursor: pointer;
+}
+
+.positive {
+  color: var(--terminal-bullish);
+}
+
+.negative {
+  color: var(--terminal-bearish);
+}
+
+.neutral {
+  color: var(--terminal-neutral);
+}
+
+.coin-confidence {
+  text-align: right;
+}
+
+.prediction-bullish {
+  color: var(--terminal-bullish);
+}
+
+.prediction-bearish {
+  color: var(--terminal-bearish);
+}
+
+.prediction-neutral {
+  color: var(--terminal-neutral);
+}
+
+.terminal-input-container {
+  margin-top: auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-top: 1px solid var(--terminal-dim);
+  padding-top: 10px;
+}
+
+.terminal-input-prompt {
+  flex-shrink: 0;
+  margin-right: 5px;
+}
+
+.terminal-input {
+  flex-grow: 1;
+  background-color: transparent;
+  border: none;
+  outline: none;
+  color: var(--terminal-text);
+  font-family: 'Courier New', monospace;
+  font-size: 1em;
+  caret-color: var(--terminal-text);
+}
+
+.loading, .error-message, .no-coins {
+  padding: 20px;
+  text-align: center;
+  color: var(--terminal-dim);
+}
+
+.error-message {
+  color: var(--terminal-error);
+}
+
+.sort-arrow {
+  margin-left: 5px;
+  display: inline-block;
+  font-weight: bold;
+}
+
+/* Favorites styling */
+.favorite-cell {
+  text-align: center;
+  cursor: pointer;
+  font-size: 1.2em;
+}
+
+.favorite-active {
+  color: #ffff33; /* Yellow color for active stars */
+}
+
+/* Price flash animation for real-time updates */
+@keyframes priceFlash {
+  0% { background-color: rgba(51, 255, 51, 0.4); }
+  100% { background-color: transparent; }
+}
+
+.price-flash {
+  animation: priceFlash 1.5s ease-out;
+}
+
+/* Easter egg - Demonic mode */
+.demonic-mode {
+  --terminal-text: #ff3333;
+  --terminal-background: #300000;
+  --terminal-dim: #ff6666;
+  --terminal-highlight: #ffffff;
+  --terminal-bullish: #ff3333;
+  --terminal-bearish: #33ff33;
+  --terminal-neutral: #ffffff;
+  animation: shake 0.5s infinite;
+  position: relative;
+}
+
+.demonic-mode::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle, rgba(80,0,0,0.2) 0%, rgba(30,0,0,0.5) 100%);
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.demonic-mode .terminal-title {
+  color: #ff0000;
+  text-shadow: 0 0 10px #ff0000, 0 0 20px #880000;
+  animation: pulse 1s infinite;
+}
+
+.demonic-mode .log-type-error {
+  color: #ff0000;
+  font-weight: bold;
+  text-shadow: 0 0 5px #ff0000;
+  font-size: 1.1em;
+}
+
+.demonic-mode .terminal-controls button {
+  border-color: #ff0000;
+  color: #ff0000;
+  background-color: rgba(80, 0, 0, 0.3);
+}
+
+.demonic-mode .coin-list th {
+  background-color: rgba(80, 0, 0, 0.4);
+}
+
+.demonic-mode .terminal-input {
+  color: #ff0000;
+  text-shadow: 0 0 5px #ff0000;
+}
+
+.demonic-flash {
+  animation: flash 0.1s infinite;
+}
+
+@keyframes flash {
+  0% { filter: brightness(1); }
+  50% { filter: brightness(2); }
+  100% { filter: brightness(1); }
+}
+
+@keyframes pulse {
+  0% { opacity: 0.8; }
+  50% { opacity: 1; }
+  100% { opacity: 0.8; }
+}
+
+@keyframes shake {
+  0% { transform: translate(1px, 1px) rotate(0deg); }
+  10% { transform: translate(-1px, -2px) rotate(-1deg); }
+  20% { transform: translate(-3px, 0px) rotate(1deg); }
+  30% { transform: translate(3px, 2px) rotate(0deg); }
+  40% { transform: translate(1px, -1px) rotate(1deg); }
+  50% { transform: translate(-1px, 2px) rotate(-1deg); }
+  60% { transform: translate(-3px, 1px) rotate(0deg); }
+  70% { transform: translate(3px, 1px) rotate(-1deg); }
+  80% { transform: translate(-1px, -1px) rotate(1deg); }
+  90% { transform: translate(1px, 2px) rotate(0deg); }
+  100% { transform: translate(1px, -2px) rotate(-1deg); }
+}
+
+/* Tooltip for ML explanation */
+[title] {
+  position: relative;
+  cursor: help;
+}
+
+[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: var(--terminal-text);
+  padding: 5px;
+  border: 1px solid var(--terminal-dim);
+  border-radius: 3px;
+  font-size: 0.85em;
+  white-space: pre-wrap;
+  max-width: 300px;
+  z-index: 10;
+}
+
+/* Special token styling for CloudyHeart and other special tokens */
+.special-token {
+  background-color: rgba(51, 170, 255, 0.07);
+}
+
+.special-token:hover {
+  background-color: rgba(51, 170, 255, 0.15) !important;
+}
+
+.special-indicator {
+  color: var(--terminal-info);
+  margin-left: 5px;
+  font-size: 0.9em;
+}
+
+/* DEX token styling */
+.dex-token {
+  border-left: 3px solid var(--terminal-info);
+}
+
+/* Chart styles */
+.coin-chart-container {
+  background-color: var(--terminal-background);
+  border: 1px solid var(--terminal-dim);
+  border-radius: 4px;
+  padding: 15px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.chart-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.chart-select {
+  background-color: var(--terminal-background);
+  color: var(--terminal-text);
+  border: 1px solid var(--terminal-dim);
+  padding: 5px;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+}
+
+.coin-detail-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.chart-container {
+  height: 400px;
+  position: relative;
+}
+
+.advanced-analysis-container {
+  border: 1px solid var(--terminal-dim);
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 10px;
+}
+
+.advanced-analysis-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  border-bottom: 1px solid var(--terminal-dim);
+  padding-bottom: 10px;
+}
+
+.advanced-analysis-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.advanced-button {
+  background-color: transparent;
+  border: 1px solid var(--terminal-dim);
+  color: var(--terminal-dim);
+  padding: 5px 10px;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+}
+
+.advanced-button.active {
+  color: var(--terminal-text);
+  border-color: var(--terminal-text);
+  background-color: rgba(51, 255, 51, 0.1);
+}
+
+.loading, .error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--terminal-dim);
+}
+
+/* Multi-Signal Analysis Components */
+.multi-signal-container {
+  padding: 10px;
+  border: 1px solid var(--terminal-dim);
+  margin-top: 20px;
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.multi-signal-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--terminal-dim);
+  margin-bottom: 15px;
+}
+
+.tab-button {
+  background-color: transparent;
+  border: none;
+  color: var(--terminal-dim);
+  padding: 8px 16px;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+}
+
+.tab-button.active {
+  color: var(--terminal-text);
+  border-bottom: 2px solid var(--terminal-text);
+}
+
+.multi-signal-result {
+  margin-bottom: 20px;
+}
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.timeframe-selector {
+  display: flex;
+  align-items: center;
+}
+
+.timeframe-selector span {
+  margin-right: 10px;
+  color: var(--terminal-dim);
+}
+
+.prediction-box {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--terminal-dim);
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.prediction-result, .prediction-confidence {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.prediction-label, .confidence-label {
+  width: 120px;
+  color: var(--terminal-dim);
+}
+
+.prediction-value {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.prediction-bullish {
+  color: var(--terminal-bullish);
+}
+
+.prediction-bearish {
+  color: var(--terminal-bearish);
+}
+
+.prediction-neutral {
+  color: var(--terminal-neutral);
+}
+
+.confidence-meter {
+  flex: 1;
+}
+
+.confidence-bar-container {
+  width: 100%;
+  height: 12px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  position: relative;
+}
+
+.confidence-bar {
+  height: 100%;
+  border-radius: 6px;
+  background-color: var(--terminal-info);
+}
+
+.high-confidence {
+  background-color: var(--terminal-bullish);
+}
+
+.medium-confidence {
+  background-color: var(--terminal-info);
+}
+
+.low-confidence {
+  background-color: var(--terminal-warning);
+}
+
+.confidence-value {
+  position: absolute;
+  right: -40px;
+  top: -2px;
+  font-size: 12px;
+}
+
+.prediction-explanation {
+  margin-top: 15px;
+}
+
+.explanation-label {
+  color: var(--terminal-dim);
+  margin-bottom: 5px;
+}
+
+.explanation-text {
+  line-height: 1.5;
+}
+
+.signal-breakdown {
+  margin-top: 20px;
+}
+
+.signal-row {
+  display: flex;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.signal-type {
+  width: 40%;
+  color: var(--terminal-dim);
+}
+
+.signal-strength {
+  width: 40%;
+}
+
+.signal-weight {
+  width: 20%;
+  text-align: right;
+}
+
+.positive {
+  color: var(--terminal-bullish);
+}
+
+.negative {
+  color: var(--terminal-bearish);
+}
+
+.neutral {
+  color: var(--terminal-neutral);
+}
+
+.signal-agreement {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid var(--terminal-dim);
+}
+
+.agreement-label {
+  color: var(--terminal-dim);
+  margin-right: 10px;
+}
+
+/* Technical Analysis Tab */
+.technical-analysis-tab {
+  padding: 10px;
+}
+
+.indicator-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+}
+
+.indicator-group {
+  flex: 1;
+  min-width: 300px;
+}
+
+.indicator-row {
+  display: flex;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.indicator-name {
+  width: 40%;
+  color: var(--terminal-dim);
+}
+
+.indicator-value {
+  width: 30%;
+}
+
+.indicator-signal {
+  width: 30%;
+  text-align: right;
+}
+
+/* Social Sentiment Tab */
+.social-sentiment-tab {
+  padding: 10px;
+}
+
+.sentiment-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.sentiment-source {
+  flex: 1;
+  min-width: 250px;
+  border: 1px solid var(--terminal-dim);
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.sentiment-stats {
+  margin-top: 10px;
+  line-height: 1.6;
+}
+
+.sentiment-distribution {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* On-Chain Data Tab */
+.onchain-data-tab {
+  padding: 10px;
+}
+
+.onchain-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+}
+
+.onchain-section {
+  flex: 1;
+  min-width: 300px;
+  border: 1px solid var(--terminal-dim);
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.onchain-stats {
+  margin-top: 15px;
+}
+
+.metric-row {
+  display: flex;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.metric-name {
+  width: 60%;
+  color: var(--terminal-dim);
+}
+
+.metric-value {
+  width: 40%;
+  text-align: right;
+}
+
+/* Scenario Testing Styles */
+.scenario-testing-container {
+  padding: 15px;
+  border: 1px solid var(--terminal-dim);
+  margin-top: 20px;
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.scenario-description {
+  color: var(--terminal-dim);
+  margin-bottom: 15px;
+}
+
+.scenario-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+.scenario-select-container, .magnitude-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.magnitude-slider {
+  width: 200px;
+  margin-top: 10px;
+  background-color: var(--terminal-dim);
+}
+
+.magnitude-value {
+  margin-top: 5px;
+  font-size: 14px;
+}
+
+.run-scenario-button {
+  padding: 8px 16px;
+  background-color: var(--terminal-text);
+  color: var(--terminal-background);
+  border: none;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  align-self: flex-end;
+  margin-top: 20px;
+}
+
+.scenario-summary {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 5px;
+}
+
+.scenario-results {
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px solid var(--terminal-dim);
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.price-impact, .volume-impact {
+  display: flex;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.impact-label {
+  width: 60%;
+  color: var(--terminal-dim);
+}
+
+.impact-value {
+  width: 40%;
+  text-align: right;
+  font-weight: bold;
+}
+
+.low-impact {
+  opacity: 0.7;
+}
+
+.medium-impact {
+  opacity: 0.85;
+}
+
+.high-impact {
+  opacity: 1;
+}
+
+.scenario-explanation {
+  margin-top: 15px;
+  padding-top: 10px;
+}
+
+.scenario-confidence {
+  margin-top: 15px;
+  padding-top: 10px;
+}
+
+.probabilities {
+  margin-top: 20px;
+}
+
+.probability-row {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.outcome {
+  width: 120px;
+  color: var(--terminal-dim);
+}
+
+.probability-bar-container {
+  flex: 1;
+  height: 8px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  margin: 0 15px;
+}
+
+.probability-bar {
+  height: 100%;
+  border-radius: 4px;
+}
+
+.probability-bar.positive {
+  background-color: var(--terminal-bullish);
+}
+
+.probability-bar.neutral {
+  background-color: var(--terminal-info);
+}
+
+.probability-bar.negative {
+  background-color: var(--terminal-bearish);
+}
+
+.probability-value {
+  width: 50px;
+  text-align: right;
+}

@@ -1,0 +1,84 @@
+okay 666 does nothing
+
+what about this
+
+Historical Charts (Candlestick or Line)
+Use a charting library (like Chart.js, ApexCharts, or TradingView Widgets) to plot price data and RSI. but you have to click into the coin to access the chart
+Allow toggling timeframe (1D, 7D, 1M, etc).
+
+ML Explanation Tooltip
+Add an info tooltip or expandable section showing:
+RSI
+
+Volatility
+
+Confidence score breakdown
+
+Training data size
+
+Mobile Responsiveness
+Ensure your dashboard UI looks good on phones and tablets using media queries or Tailwind CSS breakpoints.
+⚙️ UTILITY FEATURES
+
+type in 666 to the search bar and a demonic page shows up
+Use the /api/search?q= endpoint behind the scenes.
+
+Currency Selector (USD, EUR, BTC)
+Let users choose the quote currency (vs_currency) from CoinGecko.
+once clicked into the coin
+
+DexScreener Integration (Optional)
+Show trending tokens or DEX data for new coins.
+in the commands make a new prompt to access
+
+🧠 ADVANCED FEATURES
+9. Backtesting Tool
+Let users pick a coin and simulate trades based on your ML predictions.
+
+Show how well the model would have performed historically.
+
+in the commands make a new prompt to access
+
+Sentiment Indicator
+Scrape or fetch Twitter/Reddit/News sentiment (via APIs like LunarCrush, NewsAPI, or self-hosted solutions).
+Display a sentiment bar beside each coin.
+
+🧪 Admin/Debugging Tools
+Endpoint to manually refresh CoinGecko data
+
+Page to view API rate limits used (esp. if using free tiers)
+
+Toggle to show raw prediction JSON
+
+I'd like to upgrade the machine learning model in my generate_prediction(data) function to include more technical indicators and custom features. This is for a cryptocurrency prediction app built with Flask and yfinance.
+
+✅ Keep the current RSI-based approach, but add these additional ML features to the model pipeline:
+
+Technical Indicators (use ta or pandas-ta):
+
+MACD and MACD Signal Line
+EMA (12-day and 26-day)
+Bollinger Bands (20 period)
+Stochastic Oscillator (K & D)
+ADX (Average Directional Index)
+On-Balance Volume (OBV)
+Commodity Channel Index (CCI)
+Custom Engineered Features:
+
+Rolling mean and std deviation for Close price (5d, 10d)
+Daily high-low spread
+Volume spike ratio (volume / rolling mean volume)
+RSI divergence (if RSI trend contradicts price trend)
+Target:
+
+Keep classification target (next day price direction: 1 or 0)
+Also add a regression target (next-day return) if possible, for future enhancement
+Scaling:
+
+Apply StandardScaler or MinMaxScaler to all features before training
+Fallback:
+
+If there’s not enough data (under 30 rows), fallback to the current rule_based_prediction() logic
+Finally, refactor the model code to train with these new features, and return prediction, confidence, and reason just like before.
+
+Optional: Wrap the indicator generation into a function like generate_features(df) for clarity and reusability.

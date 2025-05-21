@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="DelphOs - Terminal-style Crypto Dashboard with ML Predictions" />
+    <title>DelphOs - Crypto Terminal</title>
+    <!-- Import monospace font -->
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+          --terminal-bg: #000000;
+          --terminal-text: #00ff00;
+          --terminal-dim: #009900;
+          --terminal-highlight: #33ff33;
+          --terminal-error: #ff3333;
+          --terminal-warning: #ffcc00;
+          --terminal-border: #333333;
+          --terminal-header: #111111;
+          --terminal-focused: #001500;
+        }
+        
+        body, html {
+          margin: 0;
+          padding: 0;
+          font-family: 'Ubuntu Mono', monospace;
+          background-color: var(--terminal-bg);
+          color: var(--terminal-text);
+          height: 100%;
+        }
+        
+        #root {
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+        }
+        
+        .app-container {
+          display: flex;
+          flex-direction: column;
+          height: 100vh;
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 1rem;
+        }
+        
+        .terminal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0.5rem 1rem;
+          border-bottom: 1px solid var(--terminal-border);
+          background-color: var(--terminal-header);
+          font-size: 1.2rem;
+          font-weight: bold;
+        }
+        
+        .terminal-body {
+          flex: 1;
+          overflow-y: auto;
+          padding: 1rem;
+          display: flex;
+          flex-direction: column;
+        }
+        
+        .terminal-logs {
+          flex: 1;
+          overflow-y: auto;
+          margin-bottom: 1rem;
+        }
+        
+        .terminal-input-container {
+          display: flex;
+          align-items: center;
+          border: 1px solid var(--terminal-border);
+          background-color: var(--terminal-bg);
+          padding: 0.5rem;
+        }
+        
+        .terminal-prompt {
+          color: var(--terminal-highlight);
+          margin-right: 0.5rem;
+        }
+        
+        .terminal-input {
+          flex: 1;
+          background: transparent;
+          border: none;
+          color: var(--terminal-text);
+          font-family: 'Ubuntu Mono', monospace;
+          font-size: 1rem;
+          outline: none;
+        }
+        
+        .coin-list {
+          width: 100%;
+          margin-top: 1rem;
+          border-collapse: collapse;
+        }
+        
+        .coin-list th {
+          text-align: left;
+          padding: 0.5rem;
+          border-bottom: 1px solid var(--terminal-border);
+          color: var(--terminal-highlight);
+        }
+        
+        .coin-list td {
+          padding: 0.5rem;
+          border-bottom: 1px solid var(--terminal-border);
+        }
+        
+        .positive {
+          color: var(--terminal-highlight);
+        }
+        
+        .negative {
+          color: var(--terminal-error);
+        }
+        
+        .blink {
+          animation: blink-animation 1.5s steps(2, start) infinite;
+        }
+        
+        @keyframes blink-animation {
+          to {
+            visibility: hidden;
+          }
+        }
+    </style>
+</head>
+<body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root">
+        <div class="app-container">
+            <div class="terminal-header">
+                <div class="terminal-title">
+                    <span>DelphOs Terminal</span>
+                </div>
+            </div>
+            <div class="terminal-body">
+                <div class="terminal-logs">
+                    <div>Welcome</div>
+                    <div style="margin-top: 5px">Type "help" for available commands. <span class="blink">_</span></div>
+                </div>
+                <div class="terminal-input-container">
+                    <div class="terminal-prompt">$</div>
+                    <input type="text" class="terminal-input" placeholder="Type 'help' for commands..." 
+                        onkeydown="if(event.key === 'Enter') processCommand(this.value)">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // API Base URL (Backend)
+        // In Replit, both services are hosted on the same domain 
+        // but with different paths
+        const API_BASE_URL = '';
+        
+        // Terminal logs container
+        const logs = document.querySelector('.terminal-logs');
+        
+        // Global variables for sorting
+        let globalCoinsData = [];
+        let currentSort = {
+            key: 'market_cap', // Default sort by market cap
+            direction: 'desc'  // Default direction is descending
+        };
+        
+        // Add a log message to the terminal
+        function addLog(message, type = 'info') {
+            const logEntry = document.createElement('div');
+            logEntry.textContent = message;
+            logEntry.className = type;
+            logs.appendChild(logEntry);
+            logs.scrollTop = logs.scrollHeight;
+        }
+        
+        // Sort coins based on clicked header column
+        function sortCoins(sortKey) {
+            // Toggle direction if clicking the same header
+            if (sortKey === currentSort.key) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.key = sortKey;
+                // Default to descending for market_cap and price, ascending for others
+                currentSort.direction = (sortKey === 'market_cap' || sortKey === 'price') ? 'desc' : 'asc';
+            }
+            
+            // Update UI to indicate sort direction
+            updateSortIndicators();
+            
+            // Sort and redisplay the coins
+            displaySortedCoins();
+        }
+        
+        // Update the UI to show current sort direction
+        function updateSortIndicators() {
+            const headers = document.querySelectorAll('.sortable');
+            headers.forEach(header => {
+                const sortKey = header.getAttribute('data-sort');
+                if (sortKey === currentSort.key) {
+                    // Update the text to show the current sort direction
+                    const headerText = header.textContent.replace(' ↕', '').replace(' ↑', '').replace(' ↓', '');
+                    header.textContent = headerText + (currentSort.direction === 'asc' ? ' ↑' : ' ↓');
+                } else {
+                    // Reset other headers to neutral
+                    const headerText = header.textContent.replace(' ↕', '').replace(' ↑', '').replace(' ↓', '');
+                    header.textContent = headerText + ' ↕';
+                }
+            });
+        }
+        
+        // Display the sorted coins
+        function displaySortedCoins() {
+            if (!globalCoinsData || globalCoinsData.length === 0) return;
+            
+            // Make a copy of the data for sorting
+            const sortedCoins = [...globalCoinsData];
+            
+            // Sort based on current sort parameters
+            sortedCoins.sort((a, b) => {
+                let valueA, valueB;
+                
+                // Extract the values to compare based on the sort key
+                switch(currentSort.key) {
+                    case 'symbol':
+                        valueA = a.symbol.toLowerCase();
+                        valueB = b.symbol.toLowerCase();
+                        break;
+                    case 'name':
+                        valueA = a.name.toLowerCase();
+                        valueB = b.name.toLowerCase();
+                        break;
+                    case 'price':
+                        valueA = a.price;
+                        valueB = b.price;
+                        break;
+                    case 'price_change_24h':
+                        valueA = a.price_change_24h;
+                        valueB = b.price_change_24h;
+                        break;
+                    case 'market_cap':
+                        valueA = a.market_cap;
+                        valueB = b.market_cap;
+                        break;
+                    default:
+                        valueA = a.market_cap;
+                        valueB = b.market_cap;
+                }
+                
+                // Apply sort direction
+                const sortFactor = currentSort.direction === 'asc' ? 1 : -1;
+                
+                if (valueA < valueB) return -1 * sortFactor;
+                if (valueA > valueB) return 1 * sortFactor;
+                return 0;
+            });
+            
+            // Clear existing coin list
+            const existingTable = document.querySelector('.coin-list');
+            if (existingTable) {
+                existingTable.remove();
+            }
+            
+            // Recreate the table with sorted data
+            // Create fresh table
+            const table = document.createElement('table');
+            table.className = 'coin-list';
+            
+            // Add the header with sortable columns
+            const thead = document.createElement('thead');
+            // Create table header HTML with proper arrow characters
+            const headerHTML = `
+                <tr>
+                    <th data-sort="symbol" class="sortable">Symbol</th>
+                    <th data-sort="name" class="sortable">Name</th>
+                    <th data-sort="price" class="sortable">Price (USD)</th>
+                    <th data-sort="price_change_24h" class="sortable">24h Change</th>
+                    <th data-sort="market_cap" class="sortable">Market Cap</th>
+                </tr>
+            `;
+            
+            thead.innerHTML = headerHTML;
+            
+            // Add click event listeners to the sortable headers
+            // Update all headers with sort arrows and click events
+            thead.querySelectorAll('.sortable').forEach(th => {
+                const sortKey = th.getAttribute('data-sort');
+                // Add arrow indicator based on current sort status
+                if (sortKey === currentSort.key) {
+                    th.textContent = th.textContent + (currentSort.direction === 'asc' ? ' ↑' : ' ↓');
+                }
+                
+                // Make header clickable with pointer cursor
+                th.style.cursor = 'pointer';
+                th.addEventListener('click', () => {
+                    sortCoins(sortKey);
+                });
+            });
+            
+            table.appendChild(thead);
+            
+            // Create the table body with sorted coins
+            const tbody = document.createElement('tbody');
+            
+            // Filter out stablecoins
+            const stablecoins = ['usdt', 'usdc', 'busd', 'dai', 'tusd', 'usdp', 'usdd', 'gusd'];
+            
+            sortedCoins
+                .filter(coin => !stablecoins.includes(coin.symbol.toLowerCase()))
+                .forEach(coin => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${coin.symbol}</td>
+                        <td>${coin.name}</td>
+                        <td>$${coin.price.toLocaleString()}</td>
+                        <td class="${coin.price_change_24h > 0 ? 'positive' : 'negative'}">
+                            ${coin.price_change_24h > 0 ? '+' : ''}${coin.price_change_24h.toFixed(2)}%
+                        </td>
+                        <td>$${(coin.market_cap / 1e9).toFixed(2)}B</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                
+            table.appendChild(tbody);
+            logs.appendChild(table);
+        }
+        
+        // Process commands
+        async function processCommand(command) {
+            const input = document.querySelector('.terminal-input');
+            input.value = '';
+            
+            addLog(`$ ${command}`, 'command');
+            
+            // Trim the command and convert to lowercase
+            const cmd = command.trim().toLowerCase();
+            
+            if (cmd === 'help') {
+                addLog('Available commands:', 'info');
+                addLog('- help: Show this help message', 'info');
+                addLog('- refresh: Refresh coin data', 'info');
+                addLog('- predict <symbol>: Generate prediction for a specific coin', 'info');
+                addLog('- clear: Clear the terminal logs', 'info');
+                return;
+            }
+            
+            if (cmd === 'refresh') {
+                await fetchCoins();
+                return;
+            }
+            
+            if (cmd === 'clear') {
+                logs.innerHTML = '';
+                return;
+            }
+            
+            if (cmd.startsWith('predict ')) {
+                const symbol = cmd.split(' ')[1].toUpperCase();
+                await fetchPrediction(symbol);
+                return;
+            }
+            
+            addLog(`Unknown command: ${command}. Type 'help' for available commands.`, 'error');
+        }
+        
+        // Fetch coins data
+        async function fetchCoins() {
+            try {
+                addLog('Fetching latest cryptocurrency data...', 'info');
+                
+                // Use the API proxy via main app
+                const response = await fetch('/api/coins');
+                
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+                
+                const coins = await response.json();
+                
+                // Store coins data in our global variable for sorting
+                globalCoinsData = coins;
+                
+                // Clear existing coin list if any
+                const existingTable = document.querySelector('.coin-list');
+                if (existingTable) {
+                    existingTable.remove();
+                }
+                
+                // Create new coin list
+                const table = document.createElement('table');
+                table.className = 'coin-list';
+                
+                // Create table header with clickable sorting
+                const thead = document.createElement('thead');
+                thead.innerHTML = `
+                    <tr>
+                        <th data-sort="symbol" class="sortable">Symbol ↕</th>
+                        <th data-sort="name" class="sortable">Name ↕</th>
+                        <th data-sort="price" class="sortable">Price (USD) ↕</th>
+                        <th data-sort="price_change_24h" class="sortable">24h Change ↕</th>
+                        <th data-sort="market_cap" class="sortable">Market Cap ↕</th>
+                    </tr>
+                `;
+                
+                // Add click handlers to the sortable headers
+                thead.querySelectorAll('.sortable').forEach(th => {
+                    th.style.cursor = 'pointer';
+                    th.addEventListener('click', () => {
+                        const sortKey = th.getAttribute('data-sort');
+                        sortCoins(sortKey);
+                    });
+                });
+                table.appendChild(thead);
+                
+                // Create table body
+                const tbody = document.createElement('tbody');
+                
+                // Filter out stablecoins and tokens we don't want to predict
+                const stablecoins = ['usdt', 'usdc', 'busd', 'dai', 'tusd', 'usdp', 'usdd', 'gusd'];
+                
+                coins
+                    .filter(coin => !stablecoins.includes(coin.symbol.toLowerCase()))
+                    .forEach(coin => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${coin.symbol}</td>
+                            <td>${coin.name}</td>
+                            <td>$${coin.price.toLocaleString()}</td>
+                            <td class="${coin.price_change_24h > 0 ? 'positive' : 'negative'}">
+                                ${coin.price_change_24h > 0 ? '+' : ''}${coin.price_change_24h.toFixed(2)}%
+                            </td>
+                            <td>$${(coin.market_cap / 1e9).toFixed(2)}B</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                
+                table.appendChild(tbody);
+                logs.appendChild(table);
+                
+                addLog(`Successfully fetched data for ${coins.length} cryptocurrencies.`, 'success');
+            } catch (error) {
+                addLog(`Error fetching coins: ${error.message}`, 'error');
+            }
+        }
+        
+        // Fetch prediction for a coin
+        async function fetchPrediction(symbol) {
+            try {
+                addLog(`Generating ML prediction for ${symbol}...`, 'info');
+                
+                const response = await fetch(`/api/ml_predictions?coin=${symbol}`);
+                
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+                
+                const prediction = await response.json();
+                
+                // Create prediction display
+                const predictionClass = prediction.prediction.toLowerCase();
+                
+                addLog(`Prediction for ${symbol}: ${prediction.prediction} (${prediction.confidence}% confidence)`, `prediction-${predictionClass}`);
+                addLog(`Reason: ${prediction.reason}`, 'info');
+                addLog(`Current RSI: ${prediction.current_rsi.toFixed(2)}`, 'info');
+                addLog(`Last Price: $${prediction.last_price.toLocaleString()}`, 'info');
+                
+                return prediction;
+            } catch (error) {
+                addLog(`Error generating prediction for ${symbol}: ${error.message}`, 'error');
+                return null;
+            }
+        }
+        
+        // Initialize the terminal
+        document.addEventListener('DOMContentLoaded', function() {
+            // Focus the input field
+            document.querySelector('.terminal-input').focus();
+            
+            // Fetch initial data
+            setTimeout(() => {
+                fetchCoins();
+            }, 1000);
+        });
+        
+        // Keep focus on input when clicking anywhere in the terminal
+        document.querySelector('.app-container').addEventListener('click', function() {
+            document.querySelector('.terminal-input').focus();
+        });
+    </script>
+</body>
+</html>
